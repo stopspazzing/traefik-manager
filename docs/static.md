@@ -105,7 +105,7 @@ Ticking the box is not enough on its own. HTTP/3 also needs:
 - **UDP published on the same port.** A Docker mapping such as `443:443` only covers TCP, so add `443:443/udp` as well. The compose file written by the [tm CLI installer](tm-cli.md) publishes TCP only.
 - **UDP open in every firewall** between clients and Traefik, including the host firewall and any port forward on your router.
 - **TLS on the router.** Only routers with TLS can be reached over HTTP/3. Other routers keep working over TCP.
-- **No UDP entrypoint on the same port.** Traefik does not start when a `/udp` entrypoint listens on the port an HTTP/3 entrypoint uses.
+- **No UDP entrypoint on the same port.** Traefik does not start when a `/udp` entrypoint listens on the port an HTTP/3 entrypoint uses. The entrypoint form refuses to save that combination. The raw YAML editor still saves it, so a broken config can be repaired by hand, and shows a warning next to **Restart Traefik**. Entrypoints bound to different IP addresses, such as `1.2.3.4:443` and `5.6.7.8:443/udp`, do not clash. `reusePort` on both does not help: Traefik then starts, but the kernel splits incoming UDP between HTTP/3 and the UDP router, so both lose traffic.
 
 A working setup publishes both protocols:
 

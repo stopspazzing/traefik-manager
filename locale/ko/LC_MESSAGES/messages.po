@@ -143,6 +143,13 @@ msgstr ""
 
 #, python-format
 msgid ""
+"%(h3)s serves HTTP/3 on UDP port %(port)s, which the UDP entrypoint %(udp)s "
+"also listens on, so Traefik would not start. Change one of the ports or turn "
+"off HTTP/3 on %(h3)s."
+msgstr ""
+
+#, python-format
+msgid ""
 "%(label)s storage at %(path)s is not writable, so settings, backups and "
 "scheduled checks will not survive a restart (%(error)s)"
 msgstr ""

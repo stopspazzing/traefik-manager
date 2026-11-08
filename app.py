@@ -2835,6 +2835,10 @@ def api_static_config_save():
         logger.info(f"Static config saved by {request.remote_addr}: {safe_path}")
         add_notification('success', _i18n.lazy_gettext('Static config saved'))
         threading.Thread(target=lambda: _git_push_if_enabled('static config save'), daemon=True).start()
+        _eps = _new_doc.get('entryPoints', _new_doc.get('entrypoints')) if isinstance(_new_doc, dict) else None
+        _warnings = [_http3_udp_clash_text(c) for c in _http3_udp_clashes(_eps)]
+        if _warnings:
+            return jsonify({'ok': True, 'warnings': _warnings})
         return jsonify({'ok': True})
     except Exception as e:
         logger.exception("Failed to write static config")
@@ -3023,6 +3027,9 @@ def api_static_section_update():
                 else:
                     ep.pop('proxyProtocol', None)
                 eps[name] = ep
+                clashes = _http3_udp_clashes(eps, name)
+                if clashes:
+                    return jsonify({'error': _http3_udp_clash_text(clashes[0])}), 400
         elif section == 'resolvers':
             resolvers = config.setdefault('certificatesResolvers', {})
             if action == 'remove':
@@ -3470,6 +3477,50 @@ def _is_valid_cidr(cidr: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+_EP_ADDRESS_RE = re.compile(r'^(\[[^\]]*\]|[^:/\[\]]*):(\d+)(?:/(tcp|udp))?$', re.IGNORECASE)
+_WILDCARD_HOSTS = ('', '0.0.0.0', '::')
+
+
+def _ep_listen(ep) -> tuple | None:
+    if not isinstance(ep, dict):
+        return None
+    m = _EP_ADDRESS_RE.match(str(ep.get('address') or '').strip())
+    if not m:
+        return None
+    host = m.group(1).strip('[]').lower()
+    try:
+        host = ipaddress.ip_address(host).compressed
+    except ValueError:
+        pass
+    return host, int(m.group(2)), (m.group(3) or 'tcp').lower()
+
+
+def _http3_udp_clashes(entry_points, name: str | None = None) -> list:
+    if not isinstance(entry_points, dict):
+        return []
+    h3, udp = [], []
+    for ep_name, ep in entry_points.items():
+        listen = _ep_listen(ep)
+        if not listen:
+            continue
+        if listen[2] == 'udp':
+            udp.append((str(ep_name), listen))
+        elif isinstance(ep.get('http3'), dict):
+            h3.append((str(ep_name), listen))
+    return [(h_name, u_name, h_listen[1])
+            for h_name, h_listen in h3 for u_name, u_listen in udp
+            if h_listen[1] == u_listen[1]
+            and (h_listen[0] in _WILDCARD_HOSTS or u_listen[0] in _WILDCARD_HOSTS or h_listen[0] == u_listen[0])
+            and (name is None or name in (h_name, u_name))]
+
+
+def _http3_udp_clash_text(clash) -> str:
+    h3_name, udp_name, port = clash
+    return gettext('%(h3)s serves HTTP/3 on UDP port %(port)s, which the UDP entrypoint %(udp)s also listens on, '
+                   'so Traefik would not start. Change one of the ports or turn off HTTP/3 on %(h3)s.',
+                   h3=h3_name, udp=udp_name, port=port)
 
 
 def _parse_cidr_input(raw) -> list:

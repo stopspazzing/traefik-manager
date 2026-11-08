@@ -295,6 +295,7 @@ async function saveStaticPopout() {
 }
 
 let _staticRestartNeeded = false;
+let _staticSaveWarnings = [];
 
 function _renderStaticStateBar() {
     const bar = document.getElementById('staticStateBar');
@@ -312,7 +313,7 @@ function _renderStaticStateBar() {
         bar.className = 'static-state-bar static-state-restart';
         bar.style.display = 'flex';
         bar.innerHTML = `<i class="ph-bold ph-warning-circle"></i>
-            <span class="static-state-text">${th('Saved. Traefik is still running the previous config.')}</span>
+            <span class="static-state-text">${th('Saved. Traefik is still running the previous config.')}${_staticSaveWarnings.map(w => `<span class="static-state-warning">${_esc(w)}</span>`).join('')}</span>
             <button onclick="triggerTraefikRestart()" class="btn-secondary text-xs static-state-restart-btn">${th('Restart Traefik')}</button>`;
         return;
     }
@@ -359,6 +360,7 @@ async function saveStaticConfig() {
             _staticOriginalContent = content;
             _staticSaved = true;
             _staticSectionEdits = false;
+            _staticSaveWarnings = Array.isArray(data.warnings) ? data.warnings.map(String) : [];
             _clearStaticPending();
             _showStaticRestartBanner();
             showToast(t('Static config saved'), 'success');

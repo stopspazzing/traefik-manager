@@ -1650,6 +1650,7 @@ html.tm-nav-collapsed .drawer-srv-head:hover .drawer-srv-mark { color: var(--tex
 @media (min-width: 1024px) { #pwaInstallBtn { display: none !important; } }
 .static-state-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 10px 14px; border-radius: 8px; font-size: 12px; }
 .static-state-bar .static-state-text { flex: 1; min-width: 0; }
+.static-state-bar .static-state-warning { display: block; margin-top: 4px; font-weight: 600; }
 .static-state-bar code { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 .static-state-pending { color: #ca8a04; background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.28); }
 .static-state-restart { color: var(--red); background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.25); }

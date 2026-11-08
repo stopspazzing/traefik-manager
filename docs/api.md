@@ -1341,6 +1341,8 @@ Validate and write an updated static config. A timestamped backup is created bef
 
 Returns `400` with `{ "error": "..." }` for empty content, invalid YAML or no configured path, and `403` if the path resolves outside the allowed directories.
 
+When the saved config has an HTTP/3 entrypoint and a `/udp` entrypoint on the same UDP port and address, which Traefik will not start with, the file is still written and the response lists the clashes: `{ "ok": true, "warnings": ["..."] }`.
+
 ---
 
 ### `POST /api/static/restart`
@@ -1390,6 +1392,8 @@ Edit one named section of the static config without writing raw YAML. **Nothing 
 | `system` | `set` | `check_new_version`, `send_usage`, `global_alias_headers`, `rule_syntax`, `st_insecure`, `st_root_cas`, `st_max_idle`, `st_dial`, `st_resp_header`, `st_idle_conn` |
 
 Returns `{ "ok": true, "raw": "...", "parsed": { } }`. `400` for an unknown section, a missing field, or an invalid duration, CIDR or number.
+
+On `entrypoints`, a save that would leave the saved entrypoint and another one listening on the same UDP port and address, one with HTTP/3 and the other a `/udp` entrypoint, returns `400`, because Traefik does not start with both. Clashes between other entrypoints are left to the raw editor's warning.
 
 On `system`, `global_alias_headers` sets `global.aliasHeadersStrategy` (Traefik 3.7.17+): `keep`, `delete` or `reject`, or empty to remove it. Leave the key out to keep whatever is in the file; older clients do, and the web UI and the mobile apps do on older Traefik or when the version cannot be read. Any other value returns `400`.
 

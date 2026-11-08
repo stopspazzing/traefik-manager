@@ -2056,10 +2056,14 @@ paths:
                 yaml: { type: string }
       responses:
         "200":
-          description: Success
+          description: Saved. `warnings` is present when an HTTP/3 entrypoint and a `/udp` entrypoint share a UDP port, which Traefik will not start with.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/OkResponse" }
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  warnings: { type: array, items: { type: string } }
         "400":
           description: Invalid YAML
           content:
